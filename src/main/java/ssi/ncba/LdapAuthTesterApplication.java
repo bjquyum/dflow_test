@@ -50,59 +50,57 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             }
         }
 
-        // 1. Simple bind (anonymous or with configured user)
+        // 1. Simple bind as 'beejez'
         try {
-            ldapTemplate.list("DC=bjquyum,DC=local");
-            System.out.println("✅ Simple bind to LDAP server succeeded.");
+            ldapTemplate.getContextSource().getContext(
+                "CN=beejez,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                "iam.Quyum2002"
+            );
+            System.out.println("✅ Simple bind to LDAP server as beejez succeeded.");
         } catch (Exception e) {
-            System.err.println("❌ Simple bind to LDAP server failed: " + e.getMessage());
+            System.err.println("❌ Simple bind to LDAP server as beejez failed: " + e.getMessage());
         }
 
-        // 2. Attempt to authenticate (bind) with the configured username and password
+        // 2. Attempt to authenticate (bind) as 'mubarak' using same password
         try {
             boolean authenticated = ldapTemplate.authenticate(
-                "CN=Administrator,OU=AWS Reserved,DC=bjquyum,DC=local",
-                "(cn=Administrator)", // Use the configured username from application.properties
-                // "(cn=TZSStatutoryReporting)",
-                "iam.Quyum2002" // Use the configured password from application.properties
+                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local", // base
+                "(distinguishedName=CN=mubarak,OU=Users,OU=bjquyum,DC=bjquyum,DC=local)", // filter
+                "iam.Quyum2002" // password
             );
             if (authenticated) {
-                System.out.println("✅ Successfully authenticated to LDAP with the provided credentials.");
+                System.out.println("✅ Successfully authenticated to LDAP as mubarak with the provided password.");
             } else {
-                System.out.println("❌ Failed to authenticate to LDAP: Invalid credentials or insufficient permissions.");
+                System.out.println("❌ Failed to authenticate to LDAP as mubarak: Invalid credentials or insufficient permissions.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed to authenticate to LDAP: " + e.getMessage());
+            System.err.println("❌ Failed to authenticate to LDAP as mubarak: " + e.getMessage());
         }
 
-        // 3. Try to use Spring Security's LdapAuthenticationProvider
+        // 3. Try to use Spring Security's LdapAuthenticationProvider for mubarak
         try {
+            org.springframework.security.ldap.DefaultSpringSecurityContextSource contextSource =
+                new org.springframework.security.ldap.DefaultSpringSecurityContextSource("ldap://172.31.47.49:389/OU=Users,OU=bjquyum,DC=bjquyum,DC=local");
+            contextSource.afterPropertiesSet();
+            org.springframework.security.ldap.authentication.BindAuthenticator authenticator =
+                new org.springframework.security.ldap.authentication.BindAuthenticator(contextSource);
+            authenticator.setUserDnPatterns(new String[]{"CN={0},OU=Users,OU=bjquyum,DC=bjquyum,DC=local"});
             org.springframework.security.ldap.authentication.LdapAuthenticationProvider provider =
-                new org.springframework.security.ldap.authentication.LdapAuthenticationProvider(
-                    new org.springframework.security.ldap.authentication.BindAuthenticator(
-                        org.springframework.security.ldap.DefaultSpringSecurityContextSource.class
-                            .getConstructor(String.class)
-                            .newInstance("ldap://172.31.47.49:389")
-                            // .newInstance("ldap://192.168.52.100:389")
-                    )
-                );
+                new org.springframework.security.ldap.authentication.LdapAuthenticationProvider(authenticator);
             org.springframework.security.core.Authentication auth =
                 provider.authenticate(
                     new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        "beejez",
-                        // "CN=beejez,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                        "mubarak",
                         "iam.Quyum2002"
-                        // "CN=TZSStatutoryReporting,OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local",
-                        // "SvDG61Z@State@255"
                     )
                 );
             if (auth.isAuthenticated()) {
-                System.out.println("✅ Spring Security LdapAuthenticationProvider: Authentication successful.");
+                System.out.println("✅ Spring Security LdapAuthenticationProvider: Authentication as mubarak successful.");
             } else {
-                System.out.println("❌ Spring Security LdapAuthenticationProvider: Authentication failed.");
+                System.out.println("❌ Spring Security LdapAuthenticationProvider: Authentication as mubarak failed.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Spring Security LdapAuthenticationProvider failed: " + e.getMessage());
+            System.err.println("❌ Spring Security LdapAuthenticationProvider failed for mubarak: " + e.getMessage());
         }
     }
 
