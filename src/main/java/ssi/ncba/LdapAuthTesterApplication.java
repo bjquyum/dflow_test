@@ -260,13 +260,7 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     public void authenticateWithContextSource(String username, String password) {
         try {
             String dn;
-            if ("beejez".equalsIgnoreCase(username)) {
-                dn = "CN=beejez,OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
-            } else if ("mubarak".equalsIgnoreCase(username)) {
-                dn = "CN=mubarak,OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
-            } else {
-                dn = "cn=" + username + ",OU=Users," + env.getRequiredProperty("spring.ldap.base");
-            }
+            dn = "CN=" + username + ",OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
             contextSource().getContext(dn, password);
             System.out.println("✅ Custom contextSource: Simple bind as '" + username + "' succeeded.");
         } catch (Exception e) {
@@ -307,7 +301,9 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
                 String displayName = attrs.get("displayName") != null ? attrs.get("displayName").get().toString() : "";
                 String mail = attrs.get("mail") != null ? attrs.get("mail").get().toString() : "";
                 String userPrincipalName = attrs.get("userPrincipalName") != null ? attrs.get("userPrincipalName").get().toString() : "";
-                return "dn=" + dn + ", displayName=" + displayName + ", mail=" + mail + ", userPrincipalName=" + userPrincipalName;
+                String sn = attrs.get("sn") != null ? attrs.get("sn").get().toString() : "";
+                String givenName = attrs.get("givenName") != null ? attrs.get("givenName").get().toString() : "";
+                return "dn=" + dn + ", displayName=" + displayName + ", mail=" + mail + ", userPrincipalName=" + userPrincipalName + ", surname=" + sn + ", givenName=" + givenName;
             });
 
             if (!results.isEmpty()) {
