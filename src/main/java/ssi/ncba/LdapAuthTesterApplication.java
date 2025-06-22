@@ -240,6 +240,10 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         contextSource.setBase(env.getRequiredProperty("spring.ldap.base"));
         contextSource.setUserDn(env.getRequiredProperty("spring.ldap.username"));
         contextSource.setPassword(env.getRequiredProperty("spring.ldap.password"));
+        // Follow referrals to avoid 'Unprocessed Continuation Reference(s)'
+        java.util.Hashtable<String, Object> envProps = new java.util.Hashtable<>();
+        envProps.put("java.naming.referral", "follow");
+        contextSource.setBaseEnvironmentProperties(envProps);
         return contextSource;
     }
 
@@ -288,11 +292,12 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     // Fetch and print some attributes for a user after successful authentication
     public void fetchUserAttributes(String username) {
         try {
-            // 3. Define Query (Search for cn=username)
+            // Set search base to the Users OU to avoid referrals
+            String searchBase = "OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
             org.springframework.ldap.query.LdapQuery query = org.springframework.ldap.query.LdapQueryBuilder.query()
+                    .base(searchBase)
                     .where("cn").is(username);
 
-            // 4. Execute Search
             java.util.List<String> results = customLdapTemplate().search(query, (javax.naming.directory.Attributes attrs) -> {
                 String dn = attrs.get("distinguishedName") != null ? attrs.get("distinguishedName").get().toString() : "No DN";
                 String displayName = attrs.get("displayName") != null ? attrs.get("displayName").get().toString() : "";
@@ -301,7 +306,6 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
                 return "dn=" + dn + ", displayName=" + displayName + ", mail=" + mail + ", userPrincipalName=" + userPrincipalName;
             });
 
-            // 5. Output
             if (!results.isEmpty()) {
                 System.out.println("🔍 User attributes for '" + username + "': " + results);
             } else {
