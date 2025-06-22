@@ -246,7 +246,14 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
 
     public void authenticateWithContextSource(String username, String password) {
         try {
-            String dn = "cn=" + username + ",OU=Users," + env.getRequiredProperty("spring.ldap.base");
+            String dn;
+            if ("beejez".equalsIgnoreCase(username)) {
+                dn = "CN=beejez,OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
+            } else if ("mubarak".equalsIgnoreCase(username)) {
+                dn = "CN=mubarak,OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
+            } else {
+                dn = "cn=" + username + ",OU=Users," + env.getRequiredProperty("spring.ldap.base");
+            }
             contextSource().getContext(dn, password);
             System.out.println("✅ Custom contextSource: Simple bind as '" + username + "' succeeded.");
         } catch (Exception e) {
