@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import javax.net.ssl.*;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Hashtable;
 
 @SpringBootApplication
 public class LdapAuthTesterApplication implements CommandLineRunner {
@@ -231,6 +232,10 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         // Fetch and print some attributes for a user after successful authentication
         fetchUserAttributes("beejez");
         fetchUserAttributes("mubarak");
+
+        // Fetch user data using JNDI for beejez and mubarak
+        fetchUserDataWithJndi("beejez");
+        fetchUserDataWithJndi("mubarak");
     }
 
     @Bean
@@ -292,11 +297,12 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     // Fetch and print some attributes for a user after successful authentication
     public void fetchUserAttributes(String username) {
         try {
-            // Set search base to the Users OU to avoid referrals
-            String searchBase = "OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
+            // Use the domain base and filter for user objects to avoid NO_OBJECT errors
+            String searchBase = "DC=bjquyum,DC=local";
             org.springframework.ldap.query.LdapQuery query = org.springframework.ldap.query.LdapQueryBuilder.query()
                     .base(searchBase)
-                    .where("cn").is(username);
+                    .where("objectClass").is("user")
+                    .and("cn").is(username);
 
             java.util.List<String> results = customLdapTemplate().search(query, (javax.naming.directory.Attributes attrs) -> {
                 String dn = attrs.get("distinguishedName") != null ? attrs.get("distinguishedName").get().toString() : "No DN";
@@ -313,6 +319,47 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             }
         } catch (Exception e) {
             System.err.println("❌ Error fetching user attributes for '" + username + "': " + e.getMessage());
+        }
+    }
+
+    public void fetchUserDataWithJndi(String searchCn) {
+        String ldapUrl = env.getRequiredProperty("spring.ldap.urls");
+        String baseDn = env.getRequiredProperty("spring.ldap.base");
+        String username = env.getRequiredProperty("spring.ldap.username");
+        String password = env.getRequiredProperty("spring.ldap.password");
+        String searchFilter = "(cn=" + searchCn + ")";
+
+        try {
+            Hashtable<String, String> jndiEnv = new Hashtable<>();
+            jndiEnv.put(javax.naming.Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            jndiEnv.put(javax.naming.Context.PROVIDER_URL, ldapUrl);
+            jndiEnv.put(javax.naming.Context.SECURITY_AUTHENTICATION, "simple");
+            jndiEnv.put(javax.naming.Context.SECURITY_PRINCIPAL, username);
+            jndiEnv.put(javax.naming.Context.SECURITY_CREDENTIALS, password);
+
+            javax.naming.directory.DirContext ctx = new javax.naming.directory.InitialDirContext(jndiEnv);
+
+            javax.naming.directory.SearchControls controls = new javax.naming.directory.SearchControls();
+            controls.setSearchScope(javax.naming.directory.SearchControls.SUBTREE_SCOPE);
+
+            javax.naming.NamingEnumeration<javax.naming.directory.SearchResult> results =
+                    ctx.search(baseDn, searchFilter, controls);
+
+            while (results.hasMore()) {
+                javax.naming.directory.SearchResult result = results.next();
+                javax.naming.directory.Attributes attrs = result.getAttributes();
+
+                System.out.println("Distinguished Name: " + result.getNameInNamespace());
+                javax.naming.NamingEnumeration<? extends javax.naming.directory.Attribute> attributes = attrs.getAll();
+                while (attributes.hasMore()) {
+                    javax.naming.directory.Attribute attr = attributes.next();
+                    System.out.println(attr.getID() + ": " + attr.get());
+                }
+            }
+
+            ctx.close();
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching user data with JNDI: " + e.getMessage());
         }
     }
 }
