@@ -8,6 +8,7 @@ import org.springframework.ldap.core.LdapTemplate;
 // import org.springframework.ldap.query.LdapQuery;
 // import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
+import org.springframework.context.annotation.Bean;
 import javax.net.ssl.*;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -17,6 +18,9 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
 
     @Autowired
     private LdapTemplate ldapTemplate;
+
+    @Autowired
+    private org.springframework.core.env.Environment env;
 
     public static void main(String[] args) {
         disableSslVerification(); // Disable SSL certificate validation (for testing only)
@@ -218,6 +222,35 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             }
         } catch (Exception e) {
             System.err.println("❌ Spring Security LdapAuthenticationProvider failed for beejez: " + e.getMessage());
+        }
+
+        // 4. Test custom contextSource authenticate method for beejez and mubarak
+        authenticateWithContextSource("beejez", "iam.Quyum2002");
+        authenticateWithContextSource("mubarak", "iam.Quyum2002");
+    }
+
+    @Bean
+    public org.springframework.ldap.core.support.LdapContextSource contextSource() {
+        org.springframework.ldap.core.support.LdapContextSource contextSource = new org.springframework.ldap.core.support.LdapContextSource();
+        contextSource.setUrl(env.getRequiredProperty("spring.ldap.urls"));
+        contextSource.setBase(env.getRequiredProperty("spring.ldap.base"));
+        contextSource.setUserDn(env.getRequiredProperty("spring.ldap.username"));
+        contextSource.setPassword(env.getRequiredProperty("spring.ldap.password"));
+        return contextSource;
+    }
+
+    @Bean
+    public org.springframework.ldap.core.LdapTemplate customLdapTemplate() {
+        return new org.springframework.ldap.core.LdapTemplate(contextSource());
+    }
+
+    public void authenticateWithContextSource(String username, String password) {
+        try {
+            String dn = "cn=" + username + ",OU=Users," + env.getRequiredProperty("spring.ldap.base");
+            contextSource().getContext(dn, password);
+            System.out.println("✅ Custom contextSource: Simple bind as '" + username + "' succeeded.");
+        } catch (Exception e) {
+            System.err.println("❌ Custom contextSource: Simple bind as '" + username + "' failed: " + e.getMessage());
         }
     }
 
