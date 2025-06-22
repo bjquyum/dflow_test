@@ -38,7 +38,8 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         }
 
         // 0.1 Test if machine can reach LDAP/LDAPS URL
-        String ldapHost = "192.168.52.100"; // from spring.ldap.urls
+        // String ldapHost = "192.168.52.100"; // from spring.ldap.urls
+        String ldapHost = "172.31.47.49"; // from spring.ldap.urls
         int[] ports = {389, 636}; // 389=LDAP, 636=LDAPS
         for (int port : ports) {
             try (java.net.Socket socket = new java.net.Socket()) {
@@ -62,7 +63,8 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         try {
             boolean authenticated = ldapTemplate.authenticate(
                 "",
-                "(cn=TZSStatutoryReporting)",
+                "(cn=Admin)",
+                // "(cn=TZSStatutoryReporting)",
                 null
             );
             if (authenticated) {
@@ -81,14 +83,17 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
                     new org.springframework.security.ldap.authentication.BindAuthenticator(
                         org.springframework.security.ldap.DefaultSpringSecurityContextSource.class
                             .getConstructor(String.class)
-                            .newInstance("ldap://192.168.52.100:389")
+                            .newInstance("ldap://172.31.47.49:389")
+                            // .newInstance("ldap://192.168.52.100:389")
                     )
                 );
             org.springframework.security.core.Authentication auth =
                 provider.authenticate(
                     new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        "CN=TZSStatutoryReporting,OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local",
-                        "SvDG61Z@State@255"
+                        "CN=Admin,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                        "iam.Quyum2002"
+                        // "CN=TZSStatutoryReporting,OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local",
+                        // "SvDG61Z@State@255"
                     )
                 );
             if (auth.isAuthenticated()) {
