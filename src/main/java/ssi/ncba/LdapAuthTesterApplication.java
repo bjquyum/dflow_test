@@ -65,7 +65,7 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         try {
             java.util.List<String> results = ldapTemplate.search(
                 "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
-                "(cn=mubarak)",
+                "(cn=beejez)",
                 (org.springframework.ldap.core.AttributesMapper<String>) (attributes) -> {
                     javax.naming.directory.Attribute dnAttr = attributes.get("distinguishedName");
                     if (dnAttr != null) {
@@ -77,12 +77,12 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             );
             results.removeIf(java.util.Objects::isNull);
             if (!results.isEmpty()) {
-                System.out.println("🔍 Found user 'mubarak' in AD: " + results);
+                System.out.println("🔍 Found user 'beejez' in AD: " + results);
             } else {
-                System.out.println("🔍 User 'mubarak' not found in AD.");
+                System.out.println("🔍 User 'beejez' not found in AD.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Error searching for user 'mubarak' in AD: " + e.getMessage());
+            System.err.println("❌ Error searching for user 'beejez' in AD: " + e.getMessage());
         }
 
         // 2. Attempt to authenticate (bind) as 'mubarak' using same password
