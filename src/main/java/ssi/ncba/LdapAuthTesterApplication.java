@@ -298,11 +298,9 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     public void fetchUserAttributes(String username) {
         try {
             // Use the domain base and filter for user objects to avoid NO_OBJECT errors
-            String searchBase = "DC=bjquyum,DC=local";
+            // String searchBase = "DC=bjquyum,DC=local";
             org.springframework.ldap.query.LdapQuery query = org.springframework.ldap.query.LdapQueryBuilder.query()
-                    .base(searchBase)
-                    .where("objectClass").is("user")
-                    .and("cn").is(username);
+                    .where("CN").is(username);
 
             java.util.List<String> results = customLdapTemplate().search(query, (javax.naming.directory.Attributes attrs) -> {
                 String dn = attrs.get("distinguishedName") != null ? attrs.get("distinguishedName").get().toString() : "No DN";
