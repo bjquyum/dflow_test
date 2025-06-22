@@ -288,20 +288,20 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     // Fetch and print some attributes for a user after successful authentication
     public void fetchUserAttributes(String username) {
         try {
-            // Use sAMAccountName for search, which is reliable in AD
-            String base = "OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
-            String filter = "(sAMAccountName=" + username + ")";
-            java.util.List<String> results = customLdapTemplate().search(
-                base,
-                filter,
-                (org.springframework.ldap.core.AttributesMapper<String>) attributes -> {
-                    // Fetch some common attributes
-                    String displayName = attributes.get("displayName") != null ? attributes.get("displayName").get().toString() : "";
-                    String mail = attributes.get("mail") != null ? attributes.get("mail").get().toString() : "";
-                    String userPrincipalName = attributes.get("userPrincipalName") != null ? attributes.get("userPrincipalName").get().toString() : "";
-                    return "displayName=" + displayName + ", mail=" + mail + ", userPrincipalName=" + userPrincipalName;
-                }
-            );
+            // 3. Define Query (Search for cn=username)
+            org.springframework.ldap.query.LdapQuery query = org.springframework.ldap.query.LdapQueryBuilder.query()
+                    .where("cn").is(username);
+
+            // 4. Execute Search
+            java.util.List<String> results = customLdapTemplate().search(query, (javax.naming.directory.Attributes attrs) -> {
+                String dn = attrs.get("distinguishedName") != null ? attrs.get("distinguishedName").get().toString() : "No DN";
+                String displayName = attrs.get("displayName") != null ? attrs.get("displayName").get().toString() : "";
+                String mail = attrs.get("mail") != null ? attrs.get("mail").get().toString() : "";
+                String userPrincipalName = attrs.get("userPrincipalName") != null ? attrs.get("userPrincipalName").get().toString() : "";
+                return "dn=" + dn + ", displayName=" + displayName + ", mail=" + mail + ", userPrincipalName=" + userPrincipalName;
+            });
+
+            // 5. Output
             if (!results.isEmpty()) {
                 System.out.println("🔍 User attributes for '" + username + "': " + results);
             } else {
