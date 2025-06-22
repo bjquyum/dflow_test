@@ -61,28 +61,15 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             System.err.println("❌ Simple bind to LDAP server as beejez failed: " + e.getMessage());
         }
 
-        // 1.1 Search for user 'mubarak' in AD
+        // 1.1 Simple bind as 'mubarak'
         try {
-            java.util.List<String> results = ldapTemplate.search(
-                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
-                "(cn=beejez)",
-                (org.springframework.ldap.core.AttributesMapper<String>) (attributes) -> {
-                    javax.naming.directory.Attribute dnAttr = attributes.get("distinguishedName");
-                    if (dnAttr != null) {
-                        return dnAttr.get().toString();
-                    } else {
-                        return null;
-                    }
-                }
+            ldapTemplate.getContextSource().getContext(
+                "CN=mubarak,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                "iam.Quyum2002"
             );
-            results.removeIf(java.util.Objects::isNull);
-            if (!results.isEmpty()) {
-                System.out.println("🔍 Found user 'beejez' in AD: " + results);
-            } else {
-                System.out.println("🔍 User 'beejez' not found in AD.");
-            }
+            System.out.println("✅ Simple bind to LDAP server as mubarak succeeded.");
         } catch (Exception e) {
-            System.err.println("❌ Error searching for user 'beejez' in AD: " + e.getMessage());
+            System.err.println("❌ Simple bind to LDAP server as mubarak failed: " + e.getMessage());
         }
 
         // 2. Attempt to authenticate (bind) as 'mubarak' using same password
@@ -101,30 +88,89 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             System.err.println("❌ Failed to authenticate to LDAP as mubarak: " + e.getMessage());
         }
 
+        // 2. Authentication test for 'beejez'
+        try {
+            boolean authenticated = ldapTemplate.authenticate(
+                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                "(cn=beejez)",
+                "iam.Quyum2002"
+            );
+            if (authenticated) {
+                System.out.println("✅ Successfully authenticated to LDAP as beejez with the provided password.");
+            } else {
+                System.out.println("❌ Failed to authenticate to LDAP as beejez: Invalid credentials or insufficient permissions.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to authenticate to LDAP as beejez: " + e.getMessage());
+        }
+
+        // 3. Authentication test for 'mubarak'
+        try {
+            boolean authenticated = ldapTemplate.authenticate(
+                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                "(cn=mubarak)",
+                "iam.Quyum2002"
+            );
+            if (authenticated) {
+                System.out.println("✅ Successfully authenticated to LDAP as mubarak with the provided password.");
+            } else {
+                System.out.println("❌ Failed to authenticate to LDAP as mubarak: Invalid credentials or insufficient permissions.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to authenticate to LDAP as mubarak: " + e.getMessage());
+        }
+
+        // 3. Try to use Spring Security's LdapAuthenticationProvider for mubarak
         // 3. Try to use Spring Security's LdapAuthenticationProvider for mubarak
         try {
             org.springframework.security.ldap.DefaultSpringSecurityContextSource contextSource =
-                new org.springframework.security.ldap.DefaultSpringSecurityContextSource("ldap://172.31.47.49:389/OU=Users,OU=bjquyum,DC=bjquyum,DC=local");
+            new org.springframework.security.ldap.DefaultSpringSecurityContextSource("ldap://172.31.47.49:389/OU=Users,OU=bjquyum,DC=bjquyum,DC=local");
             contextSource.afterPropertiesSet();
             org.springframework.security.ldap.authentication.BindAuthenticator authenticator =
-                new org.springframework.security.ldap.authentication.BindAuthenticator(contextSource);
+            new org.springframework.security.ldap.authentication.BindAuthenticator(contextSource);
             authenticator.setUserDnPatterns(new String[]{"CN={0},OU=Users,OU=bjquyum,DC=bjquyum,DC=local"});
             org.springframework.security.ldap.authentication.LdapAuthenticationProvider provider =
-                new org.springframework.security.ldap.authentication.LdapAuthenticationProvider(authenticator);
+            new org.springframework.security.ldap.authentication.LdapAuthenticationProvider(authenticator);
             org.springframework.security.core.Authentication auth =
-                provider.authenticate(
-                    new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        "mubarak",
-                        "iam.Quyum2002"
-                    )
-                );
+            provider.authenticate(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "mubarak",
+                "iam.Quyum2002"
+                )
+            );
             if (auth.isAuthenticated()) {
-                System.out.println("✅ Spring Security LdapAuthenticationProvider: Authentication as mubarak successful.");
+            System.out.println("✅ Spring Security LdapAuthenticationProvider: Authentication as mubarak successful.");
             } else {
-                System.out.println("❌ Spring Security LdapAuthenticationProvider: Authentication as mubarak failed.");
+            System.out.println("❌ Spring Security LdapAuthenticationProvider: Authentication as mubarak failed.");
             }
         } catch (Exception e) {
             System.err.println("❌ Spring Security LdapAuthenticationProvider failed for mubarak: " + e.getMessage());
+        }
+
+        // 3.1 Try to use Spring Security's LdapAuthenticationProvider for beejez
+        try {
+            org.springframework.security.ldap.DefaultSpringSecurityContextSource contextSource =
+            new org.springframework.security.ldap.DefaultSpringSecurityContextSource("ldap://172.31.47.49:389/OU=Users,OU=bjquyum,DC=bjquyum,DC=local");
+            contextSource.afterPropertiesSet();
+            org.springframework.security.ldap.authentication.BindAuthenticator authenticator =
+            new org.springframework.security.ldap.authentication.BindAuthenticator(contextSource);
+            authenticator.setUserDnPatterns(new String[]{"CN={0},OU=Users,OU=bjquyum,DC=bjquyum,DC=local"});
+            org.springframework.security.ldap.authentication.LdapAuthenticationProvider provider =
+            new org.springframework.security.ldap.authentication.LdapAuthenticationProvider(authenticator);
+            org.springframework.security.core.Authentication auth =
+            provider.authenticate(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "beejez",
+                "iam.Quyum2002"
+                )
+            );
+            if (auth.isAuthenticated()) {
+            System.out.println("✅ Spring Security LdapAuthenticationProvider: Authentication as beejez successful.");
+            } else {
+            System.out.println("❌ Spring Security LdapAuthenticationProvider: Authentication as beejez failed.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Spring Security LdapAuthenticationProvider failed for beejez: " + e.getMessage());
         }
     }
 
