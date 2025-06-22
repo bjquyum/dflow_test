@@ -52,11 +52,10 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
 
         // 1. Simple bind (anonymous or with configured user)
         try {
-            ldapTemplate.list("");
+            ldapTemplate.list("DC=bjquyum,DC=local");
             System.out.println("✅ Simple bind to LDAP server succeeded.");
         } catch (Exception e) {
             System.err.println("❌ Simple bind to LDAP server failed: " + e.getMessage());
-            return;
         }
 
         // 2. Attempt to authenticate (bind) with the configured username and password
