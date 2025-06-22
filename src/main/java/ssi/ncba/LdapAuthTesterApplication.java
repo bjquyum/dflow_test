@@ -61,6 +61,30 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             System.err.println("❌ Simple bind to LDAP server as beejez failed: " + e.getMessage());
         }
 
+        // 1.1 Search for user 'mubarak' in AD
+        try {
+            java.util.List<String> results = ldapTemplate.search(
+                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                "(cn=mubarak)",
+                (org.springframework.ldap.core.AttributesMapper<String>) (attributes) -> {
+                    javax.naming.directory.Attribute dnAttr = attributes.get("distinguishedName");
+                    if (dnAttr != null) {
+                        return dnAttr.get().toString();
+                    } else {
+                        return null;
+                    }
+                }
+            );
+            results.removeIf(java.util.Objects::isNull);
+            if (!results.isEmpty()) {
+                System.out.println("🔍 Found user 'mubarak' in AD: " + results);
+            } else {
+                System.out.println("🔍 User 'mubarak' not found in AD.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error searching for user 'mubarak' in AD: " + e.getMessage());
+        }
+
         // 2. Attempt to authenticate (bind) as 'mubarak' using same password
         try {
             boolean authenticated = ldapTemplate.authenticate(
