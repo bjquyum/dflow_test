@@ -227,6 +227,10 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         // 4. Test custom contextSource authenticate method for beejez and mubarak
         authenticateWithContextSource("beejez", "iam.Quyum2002");
         authenticateWithContextSource("mubarak", "iam.Quyum2002");
+
+        // Fetch and print some attributes for a user after successful authentication
+        fetchUserAttributes("beejez");
+        fetchUserAttributes("mubarak");
     }
 
     @Bean
@@ -278,6 +282,33 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
         } catch (Exception e) {
             System.err.println("⚠️ Failed to disable SSL verification: " + e.getMessage());
+        }
+    }
+
+    // Fetch and print some attributes for a user after successful authentication
+    public void fetchUserAttributes(String username) {
+        try {
+            // Use sAMAccountName for search, which is reliable in AD
+            String base = "OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
+            String filter = "(sAMAccountName=" + username + ")";
+            java.util.List<String> results = customLdapTemplate().search(
+                base,
+                filter,
+                (org.springframework.ldap.core.AttributesMapper<String>) attributes -> {
+                    // Fetch some common attributes
+                    String displayName = attributes.get("displayName") != null ? attributes.get("displayName").get().toString() : "";
+                    String mail = attributes.get("mail") != null ? attributes.get("mail").get().toString() : "";
+                    String userPrincipalName = attributes.get("userPrincipalName") != null ? attributes.get("userPrincipalName").get().toString() : "";
+                    return "displayName=" + displayName + ", mail=" + mail + ", userPrincipalName=" + userPrincipalName;
+                }
+            );
+            if (!results.isEmpty()) {
+                System.out.println("🔍 User attributes for '" + username + "': " + results);
+            } else {
+                System.out.println("🔍 No user attributes found for '" + username + "'.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching user attributes for '" + username + "': " + e.getMessage());
         }
     }
 }
