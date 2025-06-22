@@ -72,55 +72,102 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             System.err.println("❌ Simple bind to LDAP server as mubarak failed: " + e.getMessage());
         }
 
-        // 2. Attempt to authenticate (bind) as 'mubarak' using same password
+        // 2. Authentication test for 'beejez' using distinguishedName (DN)
         try {
             boolean authenticated = ldapTemplate.authenticate(
-                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local", // base
-                "(distinguishedName=CN=mubarak,OU=Users,OU=bjquyum,DC=bjquyum,DC=local)", // filter
-                "iam.Quyum2002" // password
+            "",
+            "distinguishedName=CN=beejez,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+            "iam.Quyum2002"
             );
             if (authenticated) {
-                System.out.println("✅ Successfully authenticated to LDAP as mubarak with the provided password.");
+            System.out.println("✅ Successfully authenticated to LDAP as beejez (distinguishedName) with the provided password.");
             } else {
-                System.out.println("❌ Failed to authenticate to LDAP as mubarak: Invalid credentials or insufficient permissions.");
+            System.out.println("❌ Failed to authenticate to LDAP as beejez (distinguishedName): Invalid credentials or insufficient permissions.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed to authenticate to LDAP as mubarak: " + e.getMessage());
+            System.err.println("❌ Failed to authenticate to LDAP as beejez (distinguishedName): " + e.getMessage());
         }
 
-        // 2. Authentication test for 'beejez'
+        // 2.1 Authentication test for 'mubarak' using distinguishedName (DN)
         try {
             boolean authenticated = ldapTemplate.authenticate(
-                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
-                "(cn=beejez)",
-                "iam.Quyum2002"
+            "",
+            "distinguishedName=CN=mubarak,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+            "iam.Quyum2002"
             );
             if (authenticated) {
-                System.out.println("✅ Successfully authenticated to LDAP as beejez with the provided password.");
+            System.out.println("✅ Successfully authenticated to LDAP as mubarak (distinguishedName) with the provided password.");
             } else {
-                System.out.println("❌ Failed to authenticate to LDAP as beejez: Invalid credentials or insufficient permissions.");
+            System.out.println("❌ Failed to authenticate to LDAP as mubarak (distinguishedName): Invalid credentials or insufficient permissions.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed to authenticate to LDAP as beejez: " + e.getMessage());
+            System.err.println("❌ Failed to authenticate to LDAP as mubarak (distinguishedName): " + e.getMessage());
         }
 
-        // 3. Authentication test for 'mubarak'
+        // 2.2 Authentication test for 'beejez' using userPrincipalName
         try {
             boolean authenticated = ldapTemplate.authenticate(
-                "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
-                "(cn=mubarak)",
-                "iam.Quyum2002"
+            "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+            "(userPrincipalName=beejez@bjquyum.local)",
+            "iam.Quyum2002"
             );
             if (authenticated) {
-                System.out.println("✅ Successfully authenticated to LDAP as mubarak with the provided password.");
+            System.out.println("✅ Successfully authenticated to LDAP as beejez (userPrincipalName) with the provided password.");
             } else {
-                System.out.println("❌ Failed to authenticate to LDAP as mubarak: Invalid credentials or insufficient permissions.");
+            System.out.println("❌ Failed to authenticate to LDAP as beejez (userPrincipalName): Invalid credentials or insufficient permissions.");
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed to authenticate to LDAP as mubarak: " + e.getMessage());
+            System.err.println("❌ Failed to authenticate to LDAP as beejez (userPrincipalName): " + e.getMessage());
         }
 
-        // 3. Try to use Spring Security's LdapAuthenticationProvider for mubarak
+        // 2.3 Authentication test for 'mubarak' using userPrincipalName
+        try {
+            boolean authenticated = ldapTemplate.authenticate(
+            "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+            "(userPrincipalName=mubarak@bjquyum.local)",
+            "iam.Quyum2002"
+            );
+            if (authenticated) {
+            System.out.println("✅ Successfully authenticated to LDAP as mubarak (userPrincipalName) with the provided password.");
+            } else {
+            System.out.println("❌ Failed to authenticate to LDAP as mubarak (userPrincipalName): Invalid credentials or insufficient permissions.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to authenticate to LDAP as mubarak (userPrincipalName): " + e.getMessage());
+        }
+
+        // 2.4 Authentication test for 'beejez' using sAMAccountName
+        try {
+            boolean authenticated = ldapTemplate.authenticate(
+            "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+            "(sAMAccountName=beejez)",
+            "iam.Quyum2002"
+            );
+            if (authenticated) {
+            System.out.println("✅ Successfully authenticated to LDAP as beejez (sAMAccountName) with the provided password.");
+            } else {
+            System.out.println("❌ Failed to authenticate to LDAP as beejez (sAMAccountName): Invalid credentials or insufficient permissions.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to authenticate to LDAP as beejez (sAMAccountName): " + e.getMessage());
+        }
+
+        // 2.5 Authentication test for 'mubarak' using sAMAccountName
+        try {
+            boolean authenticated = ldapTemplate.authenticate(
+            "OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+            "(sAMAccountName=mubarak)",
+            "iam.Quyum2002"
+            );
+            if (authenticated) {
+            System.out.println("✅ Successfully authenticated to LDAP as mubarak (sAMAccountName) with the provided password.");
+            } else {
+            System.out.println("❌ Failed to authenticate to LDAP as mubarak (sAMAccountName): Invalid credentials or insufficient permissions.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to authenticate to LDAP as mubarak (sAMAccountName): " + e.getMessage());
+        }
+
         // 3. Try to use Spring Security's LdapAuthenticationProvider for mubarak
         try {
             org.springframework.security.ldap.DefaultSpringSecurityContextSource contextSource =
