@@ -61,10 +61,10 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         // 2. Attempt to authenticate (bind) with the configured username and password
         try {
             boolean authenticated = ldapTemplate.authenticate(
-                "",
-                "(cn=Admin)",
+                "CN=Administrator,OU=AWS Reserved,DC=bjquyum,DC=local",
+                "(cn=Administrator)", // Use the configured username from application.properties
                 // "(cn=TZSStatutoryReporting)",
-                null
+                "iam.Quyum2002" // Use the configured password from application.properties
             );
             if (authenticated) {
                 System.out.println("✅ Successfully authenticated to LDAP with the provided credentials.");
@@ -89,7 +89,8 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
             org.springframework.security.core.Authentication auth =
                 provider.authenticate(
                     new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        "CN=Admin,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
+                        "beejez",
+                        // "CN=beejez,OU=Users,OU=bjquyum,DC=bjquyum,DC=local",
                         "iam.Quyum2002"
                         // "CN=TZSStatutoryReporting,OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local",
                         // "SvDG61Z@State@255"
