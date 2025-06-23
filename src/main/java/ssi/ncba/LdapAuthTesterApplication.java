@@ -23,13 +23,51 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     @Autowired
     private org.springframework.core.env.Environment env;
 
+    private String inputLdapUrl;
+    private String inputLdapBase;
+    private String inputLdapUsername;
+    private String inputLdapPassword;
+    private String inputUserToAuth;
+    private String inputUserPassword;
+
     public static void main(String[] args) {
         disableSslVerification(); // Disable SSL certificate validation (for testing only)
         SpringApplication.run(LdapAuthTesterApplication.class, args);
     }
 
-    @Override
+    private void promptForLdapConfig() {
+        try (java.util.Scanner scanner = new java.util.Scanner(System.in)) {
+            String defUrl = env.getProperty("spring.ldap.urls", "");
+            String defBase = env.getProperty("spring.ldap.base", "");
+            String defBindUser = env.getProperty("spring.ldap.username", "");
+            String defBindPass = env.getProperty("spring.ldap.password", "");
+
+            System.out.print("LDAP URL [" + defUrl + "]: ");
+            inputLdapUrl = scanner.nextLine().trim();
+            if (inputLdapUrl.isEmpty()) inputLdapUrl = defUrl;
+
+            System.out.print("LDAP Base DN [" + defBase + "]: ");
+            inputLdapBase = scanner.nextLine().trim();
+            if (inputLdapBase.isEmpty()) inputLdapBase = defBase;
+
+            System.out.print("LDAP Bind Username [" + defBindUser + "]: ");
+            inputLdapUsername = scanner.nextLine().trim();
+            if (inputLdapUsername.isEmpty()) inputLdapUsername = defBindUser;
+
+            System.out.print("LDAP Bind Password [hidden, press Enter to use default]: ");
+            inputLdapPassword = scanner.nextLine();
+            if (inputLdapPassword.isEmpty()) inputLdapPassword = defBindPass;
+
+            System.out.print("Username to authenticate: ");
+            inputUserToAuth = scanner.nextLine().trim();
+            System.out.print("Password for user '" + inputUserToAuth + "': ");
+            inputUserPassword = scanner.nextLine();
+        }
+    }
+
     public void run(String... args) {
+        promptForLdapConfig();
+
         // // 0. Test if internet is working
         // try {
         //     java.net.InetAddress address = java.net.InetAddress.getByName("8.8.8.8");
@@ -43,8 +81,8 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         // }
 
         // // 0.1 Test if machine can reach LDAP/LDAPS URL
-        // // String ldapHost = "192.168.52.100"; // from spring.ldap.urls
-        // String ldapHost = "172.31.47.49"; // from spring.ldap.urls
+        // String ldapHost = "192.168.52.100"; // from spring.ldap.urls
+        // // String ldapHost = "172.31.47.49"; // from spring.ldap.urls
         // int[] ports = {389, 636}; // 389=LDAP, 636=LDAPS
         // for (int port : ports) {
         //     try (java.net.Socket socket = new java.net.Socket()) {
@@ -226,16 +264,19 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         // }
 
         // 4. Test custom contextSource authenticate method for beejez and mubarak
-        authenticateWithContextSource("beejez", "iam.Quyum2002");
-        authenticateWithContextSource("mubarak", "iam.Quyum2002");
+        // authenticateWithContextSource("beejez", "iam.Quyum2002");
+        // authenticateWithContextSource("mubarak", "iam.Quyum2002");
+        authenticateWithContextSource(inputUserToAuth, inputUserPassword);
+        fetchUserAttributes(inputUserToAuth);
+        // fetchUserDataWithJndi(inputUserToAuth);
 
         // Fetch and print some attributes for a user after successful authentication
-        fetchUserAttributes("beejez");
-        fetchUserAttributes("mubarak");
+        // fetchUserAttributes("beejez");
+        // fetchUserAttributes("mubarak");
 
         // Fetch user data using JNDI for beejez and mubarak
-        fetchUserDataWithJndi("beejez");
-        fetchUserDataWithJndi("mubarak");
+        // fetchUserDataWithJndi("beejez");
+        // fetchUserDataWithJndi("mubarak");
     }
 
     @Bean
@@ -260,6 +301,7 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     public void authenticateWithContextSource(String username, String password) {
         try {
             String dn;
+            // dn = "CN=" + username + ",OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local"; // Example for R18
             dn = "CN=" + username + ",OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
             contextSource().getContext(dn, password);
             System.out.println("✅ Custom contextSource: Simple bind as '" + username + "' succeeded.");
