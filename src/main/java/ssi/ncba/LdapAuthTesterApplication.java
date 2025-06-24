@@ -266,9 +266,12 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
         // 4. Test custom contextSource authenticate method for beejez and mubarak
         // authenticateWithContextSource("beejez", "iam.Quyum2002");
         // authenticateWithContextSource("mubarak", "iam.Quyum2002");
+        
+        System.out.println("===============================================");
         authenticateWithContextSource(inputUserToAuth, inputUserPassword);
         fetchUserAttributes(inputUserToAuth);
-        // fetchUserDataWithJndi(inputUserToAuth);
+        fetchUserDataWithJndi(inputUserToAuth);
+        System.out.println("===============================================");
 
         // Fetch and print some attributes for a user after successful authentication
         // fetchUserAttributes("beejez");
@@ -301,8 +304,8 @@ public class LdapAuthTesterApplication implements CommandLineRunner {
     public void authenticateWithContextSource(String username, String password) {
         try {
             String dn;
-            // dn = "CN=" + username + ",OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local"; // Example for R18
-            dn = "CN=" + username + ",OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
+            dn = "CN=" + username + ",OU=R18,OU=ServiceAccounts,DC=ncbabank,DC=local"; // Example for R18
+            // dn = "CN=" + username + ",OU=Users,OU=bjquyum,DC=bjquyum,DC=local";
             contextSource().getContext(dn, password);
             System.out.println("✅ Custom contextSource: Simple bind as '" + username + "' succeeded.");
         } catch (Exception e) {
